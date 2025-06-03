@@ -1,6 +1,7 @@
 from pathlib import Path
 import re
 from datetime import datetime
+import sys
 
 # 1. Read the README.md file
 readme_path = Path("README.md")
@@ -8,6 +9,10 @@ content = readme_path.read_text(encoding="utf-8")
 
 # 2. Define the regex pattern to match the section between markers
 pattern = r"(<!-- AUTO_SECTION_START -->)(.*?)(<!-- AUTO_SECTION_END -->)"
+
+if not re.search(pattern, content, flags=re.DOTALL):
+    print("Warning: No AUTO_SECTION markers found in README.md.")
+    sys.exit(1)
 
 # 3. Get the current date and time as a formatted string
 now = datetime.now()
