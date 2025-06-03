@@ -1,0 +1,16 @@
+# Python 虚拟环境目录
+/venv/
+
+# macOS 下的系统文件
+.DS_Store
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# 编辑器或 IDE 配置文件
+.vscode/
+.idea/
+
+# 日志文件
+*.log
