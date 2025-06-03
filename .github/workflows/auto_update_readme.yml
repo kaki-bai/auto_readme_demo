@@ -5,16 +5,21 @@ on:
   pull_request_target:
     types: [opened, synchronize]
 
+permissions:
+  contents: write
+
 jobs:
   update-readme:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Clone the repository and check out the PR branch
+      # 1. Clone the repository using GITHUB_TOKEN with write permissions
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0   # Fetch full history for potential merge operations
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+          persist-credentials: true
 
       # 2. Set up the Python environment
       - name: Set up Python
@@ -33,7 +38,7 @@ jobs:
         run: |
           python3 update_readme.py
 
-      # 5. If README.md was modified by the script, commit and push the changes back to the PR branch
+      # 5. Commit and push changes back to the PR branch
       - name: Commit and push changes
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
