@@ -1,0 +1,44 @@
+name: Auto Update README
+
+# Trigger on pull request opened or updated
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Clone the repository and check out the PR branch
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0   # Fetch full history for potential merge operations
+
+      # 2. Set up the Python environment
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      # 3. Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # 4. Run the update_readme.py script
+      - name: Run update_readme script
+        run: |
+          python3 update_readme.py
+
+      # 5. If README.md was modified by the script, commit and push the changes back to the PR branch
+      - name: Commit and push changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "ci: auto-update README section with latest timestamp"
+          file_pattern: README.md
+          push_options: "--no-verify"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
