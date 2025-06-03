@@ -2,7 +2,7 @@ name: Auto Update README
 
 # Trigger on pull request opened or updated
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize]
 
 jobs:
