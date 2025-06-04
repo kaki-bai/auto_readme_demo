@@ -1,3 +1,7 @@
+<!-- AUTO_SECTION_START -->
+to be updated
+<!-- AUTO_SECTION_END -->
+
 # Auto README Updater
 
 - Auto-update designated sections in `README.md` with the current timestamp and deployment status via `update_readme.py`.  

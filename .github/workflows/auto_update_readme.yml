@@ -47,5 +47,6 @@ jobs:
           commit_message: "ci: auto-update README section with latest timestamp"
           file_pattern: README.md
           push_options: "--no-verify"
+          stash: true                # Stash local changes before switching branches, then pop them
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
