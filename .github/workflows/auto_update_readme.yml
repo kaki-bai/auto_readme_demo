@@ -1,9 +1,11 @@
 name: Auto Update README
 
-# Trigger on pull request opened or updated
+# Trigger on pull request opened/updated AND on pushes to main
 on:
   pull_request_target:
     types: [opened, synchronize]
+  push:
+    branches: [main]
 
 permissions:
   contents: write
@@ -38,7 +40,7 @@ jobs:
         run: |
           python3 update_readme.py
 
-      # 5. Commit and push changes back to the PR branch
+      # 5. Commit and push changes back (to PR branch or main)
       - name: Commit and push changes
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
