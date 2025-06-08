@@ -36,10 +36,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # 4. Run the update_readme.py script
-      - name: Run update_readme script
+      # # 4. Run the update_readme.py script
+      # - name: Run update_readme script
+      #   run: |
+      #     python3 update_readme.py
+
+      # 4. Run the REST-based update_readme script
+      - name: Run update_readme_rest script
         run: |
-          python3 update_readme.py
+          python3 update_readme_rest.py \
+            ${{ github.repository_owner }} \
+            ${{ github.event.repository.name }}
 
       # 5. Commit and push changes back (to PR branch or main)
       - name: Commit and push changes
