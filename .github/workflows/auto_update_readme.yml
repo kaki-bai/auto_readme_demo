@@ -13,7 +13,8 @@ permissions:
 jobs:
   update-readme:
     runs-on: ubuntu-latest
-
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       # 1. Clone the repository using GITHUB_TOKEN with write permissions
       - name: Checkout code
