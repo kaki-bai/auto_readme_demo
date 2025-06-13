@@ -42,10 +42,17 @@ jobs:
       #   run: |
       #     python3 update_readme.py
 
-      # 4. Run the REST-based update_readme script
-      - name: Run update_readme_rest script
+      # # 4. Run the REST-based update_readme script
+      # - name: Run update_readme_rest script
+      #   run: |
+      #     python3 update_readme_rest.py \
+      #       ${{ github.repository_owner }} \
+      #       ${{ github.event.repository.name }}
+      
+      # 4. Run the GraphQl-based update_readme script
+      - name: Run update_readme_graphql script
         run: |
-          python3 update_readme_rest.py \
+          python3 update_readme_graphql.py \
             ${{ github.repository_owner }} \
             ${{ github.event.repository.name }}
 
