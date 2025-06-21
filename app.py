@@ -25,8 +25,8 @@ gh  = Github(GITHUB_TOKEN)
 
 def verify_signature(payload: bytes, signature: str) -> bool:
     """
-    Verify the X-Hub-Signature-256 header against the HMAC-SHA256
-    of the raw payload using our secret.
+    Verify the X-Hub-Signature-256 header matches the HMAC-SHA256
+    digest of the raw payload using our secret.
     """
     mac = hmac.new(WEBHOOK_SECRET, payload, hashlib.sha256)
     expected = "sha256=" + mac.hexdigest()
@@ -39,7 +39,7 @@ def webhook():
     if not verify_signature(request.data, signature):
         abort(401, "Invalid signature")
 
-    # 2. Only handle pull_request events for open, reopen, or synchronize
+    # 2. Only handle pull_request events for opened, reopened, or synchronize
     event  = request.headers.get("X-GitHub-Event", "")
     action = request.json.get("action", "")
     if event != "pull_request" or action not in ("opened", "reopened", "synchronize"):
@@ -59,36 +59,30 @@ def webhook():
         contents = repo.get_contents(path, ref=pr_ref)
         current  = base64.b64decode(contents.content).decode("utf-8")
 
-        # Debug: log branch and existing Last PR line
+        # Debug: log branch and any existing "Last PR:" line
         print(f"🔔 Processing PR branch: {pr_ref}")
-        match_current = re.search(r"Last PR: .+", current)
-        print(
-            "    current Last PR line:",
-            match_current.group(0) if match_current else "<none>"
-        )
+        curr_match = re.search(r"Last PR: .+", current)
+        print("    current Last PR line:", curr_match.group(0) if curr_match else "<none>")
 
-        # 5. Build a new timestamp without microseconds
+        # 5. Build a new timestamp (seconds precision only)
         now = datetime.datetime.utcnow().replace(microsecond=0)
         ts  = now.isoformat() + "Z"
 
-        # Replace or append the Last PR line
-        if "Last PR:" in current:
+        # 6. Insert or replace "Last PR:" line
+        if curr_match:
             updated = re.sub(r"Last PR: .+", f"Last PR: {ts}", current)
         else:
-            updated = current + f"\n\nLast PR: {ts}\n"
+            # strip trailing newlines then append
+            updated = f"{current.rstrip()}\n\nLast PR: {ts}\n"
 
-        # Debug: log new Last PR line (guard against None)
-        match_updated = re.search(r"Last PR: .+", updated)
-        print(
-            "    updated Last PR line:",
-            match_updated.group(0) if match_updated else "<none>"
-        )
+        # Debug: log the new "Last PR:" line
+        new_match = re.search(r"Last PR: .+", updated)
+        print("    updated Last PR line:", new_match.group(0) if new_match else "<none>")
 
-        # 6. Skip update if content has not changed
+        # 7. Commit only if something actually changed
         if updated == current:
             print("✅ README unchanged")
         else:
-            # 7. Commit the change back to the PR’s head branch
             repo.update_file(
                 path=path,
                 message=f"docs: update Last PR timestamp ({ts})",
@@ -99,11 +93,10 @@ def webhook():
             print("✅ README updated and submitted")
 
     except Exception as e:
-        # Log any unexpected error
         print("❌ Operation failed:", e)
 
     return "OK", 200
 
 if __name__ == "__main__":
-    # Start the Flask development server on all interfaces
+    # Start the Flask dev server on all network interfaces
     app.run(host="0.0.0.0", port=PORT)
