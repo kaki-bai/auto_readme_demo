@@ -45,17 +45,30 @@ def webhook():
     if event != "pull_request" or action not in ("opened", "reopened", "synchronize"):
         return "Ignored", 200
 
-    # 3. Extract repository info and PR head branch
+    # 3. Extract repository info and PR head branch & SHA
     repo_info = request.json["repository"]
     owner     = repo_info["owner"]["login"]
     repo_name = repo_info["name"]
-    pr_ref    = request.json["pull_request"]["head"]["ref"]
-    path      = "README.md"
+    pr         = request.json["pull_request"]
+    pr_ref     = pr["head"]["ref"]
+    head_sha   = pr["head"]["sha"]
+    path       = "README.md"
+
+    repo = gh.get_repo(f"{owner}/{repo_name}")
+
+    # 4. Skip if this commit was our own bot update
+    try:
+        last_commit = repo.get_commit(head_sha)
+        last_msg    = last_commit.commit.message
+        if last_msg.startswith("docs: update Last PR timestamp"):
+            print("⚠️ Skipping bot commit:", last_msg)
+            return "OK", 200
+    except Exception:
+        # if anything goes wrong fetching commit, just continue
+        pass
 
     try:
-        repo = gh.get_repo(f"{owner}/{repo_name}")
-
-        # 4. Fetch current README content from the PR branch
+        # 5. Fetch current README content from the PR branch
         contents = repo.get_contents(path, ref=pr_ref)
         current  = base64.b64decode(contents.content).decode("utf-8")
 
@@ -64,22 +77,21 @@ def webhook():
         curr_match = re.search(r"Last PR: .+", current)
         print("    current Last PR line:", curr_match.group(0) if curr_match else "<none>")
 
-        # 5. Build a new timestamp (seconds precision only)
+        # 6. Build a new timestamp (seconds precision only)
         now = datetime.datetime.utcnow().replace(microsecond=0)
         ts  = now.isoformat() + "Z"
 
-        # 6. Insert or replace "Last PR:" line
+        # 7. Insert or replace "Last PR:" line
         if curr_match:
             updated = re.sub(r"Last PR: .+", f"Last PR: {ts}", current)
         else:
-            # strip trailing newlines then append
             updated = f"{current.rstrip()}\n\nLast PR: {ts}\n"
 
         # Debug: log the new "Last PR:" line
         new_match = re.search(r"Last PR: .+", updated)
         print("    updated Last PR line:", new_match.group(0) if new_match else "<none>")
 
-        # 7. Commit only if something actually changed
+        # 8. Commit only if something actually changed
         if updated == current:
             print("✅ README unchanged")
         else:
