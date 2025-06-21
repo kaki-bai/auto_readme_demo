@@ -47,13 +47,14 @@ def webhook():
     repo_info = request.json["repository"]
     owner     = repo_info["owner"]["login"]
     repo_name = repo_info["name"]
+    pr_ref    = request.json["pull_request"]["head"]["ref"]
     path      = "README.md"
 
     try:
         repo = gh.get_repo(f"{owner}/{repo_name}")
 
         # 4. Retrieve current README content
-        contents = repo.get_contents(path)
+        contents = repo.get_contents(path, ref=pr_ref)
         current  = base64.b64decode(contents.content).decode("utf-8")
 
         # 5. Update logic: insert or replace "Last PR: timestamp"
@@ -72,7 +73,8 @@ def webhook():
                 path,
                 f"docs: update Last PR timestamp ({ts})",
                 updated,
-                contents.sha
+                contents.sha,
+                branch=pr_ref
             )
             print("✅ README updated and submitted")
     except Exception as e:
